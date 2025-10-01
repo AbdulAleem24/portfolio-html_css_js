@@ -1,44 +1,33 @@
-const nav = document.querySelector(".nav");
-const navMenu = document.querySelector(".nav-items");
-const btnToggleNav = document.querySelector(".menu-btn");
 const workEls = document.querySelectorAll(".work-box");
 const workImgs = document.querySelectorAll(".work-img");
+const timelineCards = document.querySelectorAll(".timeline-animate");
+const serviceItems = document.querySelectorAll(".service-animate");
+const connectCards = document.querySelectorAll(".connect-animate");
 const mainEl = document.querySelector("main");
-const yearEl = document.querySelector(".footer-text span");
 
-const toggleNav = () => {
-  nav.classList.toggle("hidden");
-
-  // Prevent screen from scrolling when menu is opened
-  document.body.classList.toggle("lock-screen");
-
-  if (nav.classList.contains("hidden")) {
-    btnToggleNav.textContent = "menu";
-  } else {
-    // When menu is opened after transition change text respectively
-    setTimeout(() => {
-      btnToggleNav.textContent = "close";
-    }, 475);
-  }
-};
-
-btnToggleNav.addEventListener("click", toggleNav);
-
-navMenu.addEventListener("click", (e) => {
-  if (e.target.localName === "a") {
-    toggleNav();
-  }
-});
-
-document.body.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !nav.classList.contains("hidden")) {
-    toggleNav();
-  }
+// Smooth scroll for navigation links
+const navLinks = document.querySelectorAll('.nav-horizontal-item a');
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = link.getAttribute('href');
+    if (targetId === '#') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const targetSection = document.querySelector(targetId);
+      if (targetSection) {
+        targetSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
 });
 
 // Animating work instances on scroll
 
 workImgs.forEach((workImg) => workImg.classList.add("transform"));
+timelineCards.forEach((card) => card.classList.add("transform"));
+serviceItems.forEach((item) => item.classList.add("transform"));
+connectCards.forEach((card) => card.classList.add("transform"));
 
 let observer = new IntersectionObserver(
   (entries) => {
@@ -58,37 +47,83 @@ workEls.forEach((workEl) => {
   observer.observe(workEl);
 });
 
-// Toggle theme and store user preferred theme for future
+// Animating timeline cards on scroll
+let timelineObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove("transform");
+        const children = Array.from(entry.target.children);
+        children.forEach((el) => {
+          if (el.style) {
+            el.style.animationPlayState = "running";
+          }
+        });
+      }
+    });
+  },
+  { threshold: 0.3 }
+);
 
-const switchThemeEl = document.querySelector('input[type="checkbox"]');
-const storedTheme = localStorage.getItem("theme");
-
-switchThemeEl.checked = storedTheme === "dark" || storedTheme === null;
-
-switchThemeEl.addEventListener("click", () => {
-  const isChecked = switchThemeEl.checked;
-
-  if (!isChecked) {
-    document.body.classList.remove("dark");
-    document.body.classList.add("light");
-    localStorage.setItem("theme", "light");
-    switchThemeEl.checked = false;
-  } else {
-    document.body.classList.add("dark");
-    document.body.classList.remove("light");
-    localStorage.setItem("theme", "dark");
-  }
+timelineCards.forEach((card) => {
+  timelineObserver.observe(card);
 });
 
-// Trap the tab when menu is opened
+// Animating service items on scroll
+let servicesObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove("transform");
+        const children = Array.from(entry.target.children);
+        children.forEach((child) => {
+          // Animate all children recursively
+          const allElements = child.querySelectorAll('*');
+          allElements.forEach((el) => {
+            if (el.style) {
+              el.style.animationPlayState = "running";
+            }
+          });
+          if (child.style) {
+            child.style.animationPlayState = "running";
+          }
+        });
+      }
+    });
+  },
+  { threshold: 0.2 }
+);
 
-const lastFocusedEl = document.querySelector('a[data-focused="last-focused"]');
+serviceItems.forEach((item) => {
+  servicesObserver.observe(item);
+});
 
-document.body.addEventListener("keydown", (e) => {
-  if (e.key === "Tab" && document.activeElement === lastFocusedEl) {
-    e.preventDefault();
-    btnToggleNav.focus();
-  }
+// Animating connect cards on scroll
+let connectObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove("transform");
+        const children = Array.from(entry.target.children);
+        children.forEach((child) => {
+          const allElements = child.querySelectorAll('*');
+          allElements.forEach((el) => {
+            if (el.style) {
+              el.style.animationPlayState = "running";
+            }
+          });
+          if (child.style) {
+            child.style.animationPlayState = "running";
+          }
+        });
+      }
+    });
+  },
+  { threshold: 0.2 }
+);
+
+connectCards.forEach((card) => {
+  connectObserver.observe(card);
 });
 
 // Rotating logos animation
@@ -111,4 +146,61 @@ logosWrappers.forEach(async (logoWrapper, i) => {
   }, 5600);
 });
 
-yearEl.textContent = new Date().getFullYear();
+// Dynamic header text color based on background
+function updateHeaderTextColor() {
+  const header = document.querySelector('.header');
+  const navHorizontal = document.querySelector('.nav-horizontal');
+  const sections = document.querySelectorAll('section, .header');
+  
+  // Get the position of the navigation bar
+  const navRect = navHorizontal.getBoundingClientRect();
+  const navCenter = navRect.top + navRect.height / 2;
+  
+  // Find which section is behind the header
+  let currentSection = null;
+  sections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top <= navCenter && rect.bottom >= navCenter) {
+      currentSection = section;
+    }
+  });
+  
+  if (!currentSection) return;
+  
+  // Get the computed background color of the current section
+  const bgColor = window.getComputedStyle(currentSection).backgroundColor;
+  
+  // Function to calculate luminance from rgb color
+  function getLuminance(rgbString) {
+    // Parse RGB values
+    const rgb = rgbString.match(/\d+/g);
+    if (!rgb) return 1; // Default to light if can't parse
+    
+    const [r, g, b] = rgb.map(val => {
+      const normalized = val / 255;
+      return normalized <= 0.03928
+        ? normalized / 12.92
+        : Math.pow((normalized + 0.055) / 1.055, 2.4);
+    });
+    
+    // Calculate relative luminance
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  
+  const luminance = getLuminance(bgColor);
+  
+  // If luminance is high (light background), use dark text
+  // If luminance is low (dark background), use light text
+  if (luminance > 0.5) {
+    navHorizontal.classList.add('on-light-bg');
+    navHorizontal.classList.remove('on-dark-bg');
+  } else {
+    navHorizontal.classList.add('on-dark-bg');
+    navHorizontal.classList.remove('on-light-bg');
+  }
+}
+
+// Run on scroll and on load
+window.addEventListener('scroll', updateHeaderTextColor);
+window.addEventListener('load', updateHeaderTextColor);
+updateHeaderTextColor();
