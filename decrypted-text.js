@@ -39,6 +39,36 @@ class DecryptedText {
       this.element.addEventListener('mouseleave', () => this.stopAnimation());
     }
     
+
+    // Make element focusable and trigger on click (with restart if already animating)
+    if (!this.element.hasAttribute('tabindex')) {
+      this.element.setAttribute('tabindex', '0');
+      this.element.setAttribute('role', 'button');
+    }
+
+    this.element.addEventListener('click', () => {
+      if (this.isAnimating) {
+        // Ensure a clean restart
+        this.completeAnimation();
+        setTimeout(() => this.startAnimation(), 30);
+      } else {
+        this.startAnimation();
+      }
+    });
+
+    // Keyboard accessibility: Enter or Space triggers the animation
+    this.element.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (this.isAnimating) {
+          this.completeAnimation();
+          setTimeout(() => this.startAnimation(), 30);
+        } else {
+          this.startAnimation();
+        }
+      }
+    });
+
     if (this.animateOn === 'view' || this.animateOn === 'both') {
       this.setupIntersectionObserver();
     }
@@ -67,9 +97,9 @@ class DecryptedText {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !this.hasAnimated) {
+          if (entry.isIntersecting) {
+            // Start animation every time element comes into view
             this.startAnimation();
-            this.hasAnimated = true;
           }
         });
       },
@@ -81,6 +111,11 @@ class DecryptedText {
     );
     
     observer.observe(this.element);
+  }
+
+  // Expose method to programmatically trigger animation
+  trigger() {
+    this.startAnimation();
   }
   
   getNextIndex() {
