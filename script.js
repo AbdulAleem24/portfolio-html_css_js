@@ -9,12 +9,17 @@ const mainEl = document.querySelector("main");
 const navLinks = document.querySelectorAll('.nav-horizontal-item a');
 navLinks.forEach(link => {
   link.addEventListener('click', (e) => {
+    const targetHref = link.getAttribute('href');
+    if (!targetHref || !targetHref.startsWith('#')) {
+      return;
+    }
+
     e.preventDefault();
-    const targetId = link.getAttribute('href');
-    if (targetId === '#') {
+
+    if (targetHref === '#') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      const targetSection = document.querySelector(targetId);
+      const targetSection = document.querySelector(targetHref);
       if (targetSection) {
         targetSection.scrollIntoView({ behavior: 'smooth' });
       }
@@ -31,14 +36,16 @@ connectCards.forEach((card) => card.classList.add("transform"));
 
 let observer = new IntersectionObserver(
   (entries) => {
-    const [entry] = entries;
-    const [textbox, picture] = Array.from(entry.target.children);
-    if (entry.isIntersecting) {
-      picture.classList.remove("transform");
-      Array.from(textbox.children).forEach(
-        (el) => (el.style.animationPlayState = "running")
-      );
-    }
+    entries.forEach((entry) => {
+      const [textbox, picture] = Array.from(entry.target.children);
+      if (entry.isIntersecting) {
+        // Remove transform from both picture and animations at the same time
+        picture.classList.remove("transform");
+        Array.from(textbox.children).forEach(
+          (el) => (el.style.animationPlayState = "running")
+        );
+      }
+    });
   },
   { threshold: 0.3 }
 );
