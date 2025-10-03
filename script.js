@@ -21,11 +21,108 @@ navLinks.forEach(link => {
     } else {
       const targetSection = document.querySelector(targetHref);
       if (targetSection) {
-        targetSection.scrollIntoView({ behavior: 'smooth' });
+        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+    }
+
+    // Remove persistent focus when activated via mouse/touch, but keep it for keyboard users
+    if (e.detail > 0) {
+      requestAnimationFrame(() => link.blur());
     }
   });
 });
+
+// Active section highlighting in navigation
+const navElement = document.querySelector('.nav-horizontal');
+let navHeight = navElement ? navElement.offsetHeight : 0;
+
+const navSectionEntries = Array.from(navLinks)
+  .map((link) => {
+    const href = link.getAttribute('href');
+    if (!href || !href.startsWith('#')) return null;
+
+    const targetSection = href === '#'
+      ? document.querySelector('#home')
+      : document.querySelector(href);
+
+    if (!targetSection) return null;
+
+    return {
+      link,
+      section: targetSection,
+      id: targetSection.id || 'home',
+    };
+  })
+  .filter(Boolean);
+
+const managedLinks = navSectionEntries.map((entry) => entry.link);
+
+const sectionOrder = [];
+navSectionEntries.forEach(({ section }) => {
+  if (!sectionOrder.includes(section)) {
+    sectionOrder.push(section);
+  }
+});
+
+let activeLink = null;
+function setActiveSection(id) {
+  if (!id) return;
+
+  const entry = navSectionEntries.find((item) => item.id === id);
+  if (!entry) return;
+
+  if (activeLink === entry.link) return;
+
+  managedLinks.forEach((link) => link.classList.remove('active'));
+  entry.link.classList.add('active');
+  activeLink = entry.link;
+}
+
+const sectionVisibility = new Map();
+const sectionObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      sectionVisibility.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+    });
+
+    const visibleSection = [...sectionVisibility.entries()]
+      .filter(([, ratio]) => ratio > 0)
+      .sort((a, b) => b[1] - a[1])[0];
+
+    if (visibleSection) {
+      setActiveSection(visibleSection[0]);
+      return;
+    }
+
+    const scrollPosition = window.scrollY + navHeight + 1;
+    let fallbackId = sectionOrder[0]?.id || 'home';
+
+    sectionOrder.forEach((section) => {
+      if (section.offsetTop <= scrollPosition) {
+        fallbackId = section.id || fallbackId;
+      }
+    });
+
+    setActiveSection(fallbackId);
+  },
+  {
+    rootMargin: '-45% 0px -45% 0px',
+    threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+  }
+);
+
+sectionOrder.forEach((section) => {
+  if (section.id) {
+    sectionVisibility.set(section.id, 0);
+    sectionObserver.observe(section);
+  }
+});
+
+window.addEventListener('resize', () => {
+  navHeight = navElement ? navElement.offsetHeight : navHeight;
+});
+
+setActiveSection(sectionOrder[0]?.id || 'home');
 
 // Animating work instances on scroll
 

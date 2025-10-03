@@ -419,6 +419,24 @@ main {
   transform: scaleX(1);
 }
 
+/* Active state for current section */
+.nav-horizontal-item a.active {
+  color: rgba(0, 0, 0, 1);
+  font-weight: 700;
+}
+
+.nav-horizontal.on-light-bg .nav-horizontal-item a.active {
+  color: rgba(0, 0, 0, 1);
+}
+
+.nav-horizontal.on-dark-bg .nav-horizontal-item a.active {
+  color: rgba(255, 255, 255, 1);
+}
+
+.nav-horizontal-item a.active::after {
+  transform: scaleX(1);
+}
+
 @media (max-width: 768px) {
   .nav-horizontal-items {
     gap: var(--gutter-small);
